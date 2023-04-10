@@ -39,8 +39,11 @@ export class MongoDbClient implements IDbClient {
     }
   }
 
-  public async insertUser(user: IUser): Promise<void> {
-    const usersCollection = this.db.collection('users');
+  public async insertUserInCollection(
+    user: IUser,
+    collectionName: string,
+  ): Promise<void> {
+    const usersCollection = this.db.collection(collectionName);
     try {
       await usersCollection.insertOne(user);
       console.log(Messages.USER_ADDED_TO_MONGO);
@@ -50,9 +53,16 @@ export class MongoDbClient implements IDbClient {
     }
   }
 
-  public async findUserByChatId(chatId: number): Promise<boolean> {
+  public async findUserByChatIdInCollection(
+    chatId: number,
+    collectionName: string,
+  ): Promise<boolean> {
     try {
-      const userField = await this.getFieldFromMongoCollection(chatId, 'id');
+      const userField = await this.getFieldFromCollection(
+        chatId,
+        'id',
+        collectionName,
+      );
       return userField !== null;
     } catch (error) {
       console.error(Errors.MONGO_FIND_ERROR, error);
@@ -60,12 +70,13 @@ export class MongoDbClient implements IDbClient {
     }
   }
 
-  public async getFieldFromMongoCollection(
+  public async getFieldFromCollection(
     chatId: number,
     field: string,
+    collectionName: string,
   ): Promise<any> {
     try {
-      const usersCollection = this.getCollection<IUser>('users');
+      const usersCollection = this.getCollection<IUser>(collectionName);
       const user = await usersCollection.findOne({ id: chatId });
       return user[field];
     } catch (error) {
@@ -74,9 +85,13 @@ export class MongoDbClient implements IDbClient {
     }
   }
 
-  public async removeCoordinateFromCollection(chatId: number, index: number) {
+  public async removeCoordinateFromCollection(
+    chatId: number,
+    index: number,
+    collectionName: string,
+  ) {
     try {
-      const usersCollection = this.getCollection<IUser>('users');
+      const usersCollection = this.getCollection<IUser>(collectionName);
       const d = await usersCollection.updateOne(
         { chatId },
         {
@@ -103,9 +118,10 @@ export class MongoDbClient implements IDbClient {
   public async updateCoordinatesInCollection(
     chatId: number,
     coordinates: Coordinates,
+    collectionName: string,
   ): Promise<void> {
     try {
-      const usersCollection = this.getCollection<IUser>('users');
+      const usersCollection = this.getCollection<IUser>(collectionName);
       const update = { $push: { coordinates: coordinates } };
       const result = await this.updateDocument(
         usersCollection,
@@ -123,9 +139,10 @@ export class MongoDbClient implements IDbClient {
   public async updateCronInCollection(
     chatId: number,
     cron: CronData,
+    collectionName: string,
   ): Promise<void> {
     try {
-      const usersCollection = this.getCollection<IUser>('users');
+      const usersCollection = this.getCollection<IUser>(collectionName);
       const update = { $set: { cron } };
       const result = await this.updateDocument(
         usersCollection,
@@ -175,9 +192,12 @@ export class MongoDbClient implements IDbClient {
     }
   }
 
-  public async removeAllCoordinatesFromCollection(chatId: number) {
+  public async removeAllCoordinatesFromCollection(
+    chatId: number,
+    collectionName: string,
+  ) {
     try {
-      const usersCollection = this.getCollection<IUser>('users');
+      const usersCollection = this.getCollection<IUser>(collectionName);
       const result = await usersCollection.updateOne(
         { id: chatId },
         { $unset: { coordinates: '' } },

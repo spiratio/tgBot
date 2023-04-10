@@ -122,7 +122,6 @@ export class TelegramBot {
           Markup.button.callback('раз в один час', 'hour'),
           Markup.button.callback('раз в 8 часов', 'eightHours'),
           Markup.button.callback('раз в 12 часов', 'twelveHours'),
-          //Markup.button.callback('другое', 'other'),
         ],
         { columns: 1 },
       );
@@ -160,27 +159,30 @@ export class TelegramBot {
 
     this.bot.action(/.+/, async (ctx) => {
       const chatId = ctx.chat?.id;
-      const result = await this.dBClient.getFieldFromMongoCollection(
+      const result = await this.dBClient.getFieldFromCollection(
         chatId,
         'coordinates',
+        'users',
       );
       const index = Number.parseInt(ctx.match[0]);
       if (index >= 0 && index < result.length) {
         const removedAddress = result[index].formattedAddress;
-        await this.dBClient.removeCoordinateFromCollection(chatId, index);
+        await this.dBClient.removeCoordinateFromCollection(chatId, index, 'users');
         ctx.reply(`Место "${removedAddress}" удалено.`);
       }
     });
 
     this.configureBot();
-
   }
   public async configureBot(): Promise<void> {
     this.bot.start(async (ctx) => {
       const keyboardOptions = this.getKeyboard();
       const chatId = ctx.chat?.id;
       if (chatId) {
-        const isUser = await this.dBClient.findUserByChatId(chatId);
+        const isUser = await this.dBClient.findUserByChatIdInCollection(
+          chatId,
+          'user',
+        );
 
         if (isUser) {
           ctx.reply(
@@ -189,7 +191,7 @@ export class TelegramBot {
           );
         } else {
           const user = this.createUserInDB(ctx);
-          await this.dBClient.insertUser(user);
+          await this.dBClient.insertUserInCollection(user, 'users');
           ctx.reply(
             'Добро пожаловать в погодаОтправлятельБот 😧😁. Бот умеет отправлять погоду по геолокации и отправлять погоду в заданнх местах, в заданные интервалы. Для того чтобы воспользоваться ботом, нажмите на кнопочки внизу ⬇️',
             keyboardOptions,
@@ -209,9 +211,10 @@ export class TelegramBot {
           const chatId = ctx.chat?.id;
           const coordinates = await this.geocoder.getCoordinates(locationName);
           const coordinatesFromCollection =
-            await this.dBClient.getFieldFromMongoCollection(
+            await this.dBClient.getFieldFromCollection(
               chatId,
               'coordinates',
+              'users',
             );
 
           let coordinatesFound = false;
@@ -232,7 +235,7 @@ export class TelegramBot {
           if (!coordinatesFound) {
             await this.dBClient.updateCoordinatesInCollection(
               chatId,
-              coordinates,
+              coordinates, 'users'
             );
             await ctx.reply(
               `${coordinates.formattedAddress} успешно добавлен!`,
@@ -251,9 +254,10 @@ export class TelegramBot {
   async getAllLocationFromDB(ctx: Context) {
     try {
       const chatId = ctx.chat?.id;
-      const coordinates = await this.dBClient.getFieldFromMongoCollection(
+      const coordinates = await this.dBClient.getFieldFromCollection(
         chatId,
         'coordinates',
+        'users',
       );
       let result: string = '';
       if (coordinates !== undefined) {
@@ -291,15 +295,16 @@ export class TelegramBot {
 
   async removeAllLocationFromDB(ctx: Context) {
     const chatId = ctx.chat?.id;
-    await this.dBClient.removeAllCoordinatesFromCollection(chatId);
+    await this.dBClient.removeAllCoordinatesFromCollection(chatId, 'users');
     ctx.reply('Все удалено');
   }
 
   async removeLocationFromDB(ctx: Context) {
     const chatId = ctx.chat?.id;
-    const result = await this.dBClient.getFieldFromMongoCollection(
+    const result = await this.dBClient.getFieldFromCollection(
       chatId,
       'coordinates',
+      'users',
     );
     const a: any[] = [];
     for (let i = 0; i < result.length; i++) {
@@ -310,10 +315,10 @@ export class TelegramBot {
   }
 
   async getAllWeather(chatId: number) {
-    //const chatId = ctx.chat?.id;
-    const coordinates = await this.dBClient.getFieldFromMongoCollection(
+    const coordinates = await this.dBClient.getFieldFromCollection(
       chatId,
       'coordinates',
+      'users',
     );
     let result: string = '';
 
@@ -331,7 +336,6 @@ export class TelegramBot {
         '\n';
     }
     this.sendMessage(chatId, result);
-    //ctx.reply(result);
   }
 
   public async sendMessage(userId: number, message: string) {
@@ -346,9 +350,10 @@ export class TelegramBot {
     const chatId = ctx.chat?.id;
     const jobId = uuidv4();
     try {
-      const cron: CronData = await this.dBClient.getFieldFromMongoCollection(
+      const cron: CronData = await this.dBClient.getFieldFromCollection(
         chatId,
         'cron',
+        'users',
       );
       if (cron !== undefined && cron.id !== undefined) {
         const job = this.cronManager.getCronJob(cron.id);
@@ -368,7 +373,7 @@ export class TelegramBot {
         id: jobId,
       };
 
-      this.dBClient.updateCronInCollection(chatId, cronData);
+      this.dBClient.updateCronInCollection(chatId, cronData, 'users');
     } catch (error) {
       console.error(error);
       await ctx.reply('Произошла ошибка при установлении интервала.');
@@ -378,9 +383,13 @@ export class TelegramBot {
   public async restartCronJob() {
     const crons = await this.dBClient.getCronData('users');
     crons.forEach((cron) => {
-      this.cronManager.scheduleJob(cron.cronData.id, cron.cronData.cronString, async () => {
-        await this.getAllWeather(cron.id);
-      })
+      this.cronManager.scheduleJob(
+        cron.cronData.id,
+        cron.cronData.cronString,
+        async () => {
+          await this.getAllWeather(cron.id);
+        },
+      );
     });
   }
 

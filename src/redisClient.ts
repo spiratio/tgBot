@@ -37,16 +37,16 @@ export class RedisDbClient implements IDbClient {
   //   }
   // }
   public async updateCoordinatesInCollection(chatId: number, coordinates: Coordinates){}
-  public async getFieldFromMongoCollection(chatId: number, field: string){}
+  public async getFieldFromCollection(chatId: number, field: string, collectionName: string){}
   public async updateCronInCollection(chatId: number, cron: CronData){}
-  public async removeCoordinateFromCollection(chatId: number, index: number){}
-  public async removeAllCoordinatesFromCollection(chatId: number) {}
+  public async removeCoordinateFromCollection(chatId: number, index: number, collectionName: string){}
+  public async removeAllCoordinatesFromCollection(chatId: number, collectionName: string) {}
   public async getCronData(collectionName: string): Promise<NewCron[]>{
     let res: NewCron[];
     return res;
   }
 
-  async findUserByChatId(chatId: number): Promise<boolean> {
+  async findUserByChatIdInCollection(chatId: number, collectionName: string): Promise<boolean> {
     return new Promise<boolean>((resolve, reject) => {
       this.client.get(`user:${chatId}`, (err, reply) => {
         if (err) {
@@ -58,7 +58,7 @@ export class RedisDbClient implements IDbClient {
       });
     });
   }
-  async insertUser(user: IUser): Promise<void> {
+  async insertUserInCollection(user: IUser, collectionName: string): Promise<void> {
     return new Promise<void>(async (resolve, reject) => {
       await this.client.set(`user:${user.id}`, JSON.stringify(user), (err) => {
         if (err) {

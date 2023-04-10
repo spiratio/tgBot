@@ -1,5 +1,4 @@
 import { CronJob } from "cron";
-import { Collection } from "mongodb";
 
 export interface Message {
   chatId: number;
@@ -49,16 +48,14 @@ export type KeyboardOptions = {
 };
 
 export interface IDbClient {
-    //getCollection<T>(arg0: string): unknown;
     connect(): Promise<void>;
-    //close(): Promise<void>;
-    findUserByChatId(chatId: number): Promise<boolean>;
-    insertUser(user: IUser): Promise<void>;
-    updateCoordinatesInCollection(chatId: number, coordinates: Coordinates);
-    getFieldFromMongoCollection(chatId: number, field: string);
-    updateCronInCollection(chatId: number, cron: CronData);
-    removeCoordinateFromCollection(chatId: number, index: number);
-    removeAllCoordinatesFromCollection(chatId: number);
+    findUserByChatIdInCollection(chatId: number, collectionName: string): Promise<boolean>;
+    insertUserInCollection(user: IUser, collectionName: string): Promise<void>;
+    updateCoordinatesInCollection(chatId: number, coordinates: Coordinates, collectionName: string);
+    getFieldFromCollection(chatId: number, field: string, collectionName: string);
+    updateCronInCollection(chatId: number, cron: CronData, collectionName: string);
+    removeCoordinateFromCollection(chatId: number, index: number, collectionName: string);
+    removeAllCoordinatesFromCollection(chatId: number, collectionName: string);
     getCronData(collectionName: string): Promise<NewCron[]>
   }
 
