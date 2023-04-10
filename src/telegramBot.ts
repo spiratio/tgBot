@@ -13,7 +13,7 @@ import {
 import Weather from './weatherData';
 import { Geocoder } from './geoHelpers';
 import { CronJob } from 'cron';
-import { convertIntervalToCron } from './cron';
+import { convertIntervalToCron } from './helpers';
 import { v4 as uuidv4 } from 'uuid';
 import { CronManager } from './cronManager';
 
