@@ -6,6 +6,8 @@ export enum Errors {
   MONGO_USER_NOT_FOUND_ERROR = 'User not found in MongoDB',
   MONGO_UPDATE_ERROR = 'Error updating document in MongoDB',
   MONGO_COLLECTION_ERROR = 'Error retrieving MongoDB collection',
+  COORDINATES_NOT_FOUND = 'Coordinates not found',
+  FAILED_TO_GET_COORDINATES = 'Failed to get coordinates'
 }
 
 export enum Messages {

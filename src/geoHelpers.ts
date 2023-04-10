@@ -1,5 +1,7 @@
 import NodeGeocoder from 'node-geocoder';
 import { Coordinates } from './types';
+import { Errors } from './constants';
+
 
 export class Geocoder {
   geocoder: NodeGeocoder.Geocoder;
@@ -11,9 +13,10 @@ export class Geocoder {
   }
 
   public async getCoordinates(district: string): Promise<Coordinates> {
+  try {
     const results = await this.geocoder.geocode(district);
     if (results.length === 0) {
-      throw new Error('Сoordinates not found');
+      throw new Error(Errors.COORDINATES_NOT_FOUND);
     } else {
       console.log(results);
       return {
@@ -22,5 +25,9 @@ export class Geocoder {
         formattedAddress: results[0].formattedAddress,
       };
     }
+  } catch (error) {
+    console.error(error);
+    throw new Error(Errors.FAILED_TO_GET_COORDINATES);
   }
+}
 }
