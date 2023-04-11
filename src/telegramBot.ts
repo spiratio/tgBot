@@ -19,6 +19,7 @@ import { CronManager } from './cronManager';
 
 dotenv.config();
 const BOT_TOKEN = process.env.BOT_TOKEN;
+const COLLECTION_NAME = 'users';
 
 if (!BOT_TOKEN) {
   console.error('Error: no bot token specified in environment variables');
@@ -162,12 +163,12 @@ export class TelegramBot {
       const result = await this.dBClient.getFieldFromCollection(
         chatId,
         'coordinates',
-        'users',
+        COLLECTION_NAME,
       );
       const index = Number.parseInt(ctx.match[0]);
       if (index >= 0 && index < result.length) {
         const removedAddress = result[index].formattedAddress;
-        await this.dBClient.removeCoordinateFromCollection(chatId, index, 'users');
+        await this.dBClient.removeCoordinateFromCollection(chatId, index, COLLECTION_NAME);
         ctx.reply(`Место "${removedAddress}" удалено.`);
       }
     });
@@ -191,7 +192,7 @@ export class TelegramBot {
           );
         } else {
           const user = this.createUserInDB(ctx);
-          await this.dBClient.insertUserInCollection(user, 'users');
+          await this.dBClient.insertUserInCollection(user, COLLECTION_NAME);
           ctx.reply(
             'Добро пожаловать в погодаОтправлятельБот 😧😁. Бот умеет отправлять погоду по геолокации и отправлять погоду в заданнх местах, в заданные интервалы. Для того чтобы воспользоваться ботом, нажмите на кнопочки внизу ⬇️',
             keyboardOptions,
@@ -214,7 +215,7 @@ export class TelegramBot {
             await this.dBClient.getFieldFromCollection(
               chatId,
               'coordinates',
-              'users',
+              COLLECTION_NAME,
             );
 
           let coordinatesFound = false;
@@ -235,7 +236,7 @@ export class TelegramBot {
           if (!coordinatesFound) {
             await this.dBClient.updateCoordinatesInCollection(
               chatId,
-              coordinates, 'users'
+              coordinates, COLLECTION_NAME
             );
             await ctx.reply(
               `${coordinates.formattedAddress} успешно добавлен!`,
@@ -257,7 +258,7 @@ export class TelegramBot {
       const coordinates = await this.dBClient.getFieldFromCollection(
         chatId,
         'coordinates',
-        'users',
+        COLLECTION_NAME,
       );
       let result: string = '';
       if (coordinates !== undefined) {
@@ -295,7 +296,7 @@ export class TelegramBot {
 
   async removeAllLocationFromDB(ctx: Context) {
     const chatId = ctx.chat?.id;
-    await this.dBClient.removeAllCoordinatesFromCollection(chatId, 'users');
+    await this.dBClient.removeAllCoordinatesFromCollection(chatId, COLLECTION_NAME);
     ctx.reply('Все удалено');
   }
 
@@ -304,7 +305,7 @@ export class TelegramBot {
     const result = await this.dBClient.getFieldFromCollection(
       chatId,
       'coordinates',
-      'users',
+      COLLECTION_NAME,
     );
     const a: any[] = [];
     for (let i = 0; i < result.length; i++) {
@@ -318,7 +319,7 @@ export class TelegramBot {
     const coordinates = await this.dBClient.getFieldFromCollection(
       chatId,
       'coordinates',
-      'users',
+      COLLECTION_NAME,
     );
     let result: string = '';
 
@@ -353,7 +354,7 @@ export class TelegramBot {
       const cron: CronData = await this.dBClient.getFieldFromCollection(
         chatId,
         'cron',
-        'users',
+        COLLECTION_NAME,
       );
       if (cron !== undefined && cron.id !== undefined) {
         const job = this.cronManager.getCronJob(cron.id);
@@ -373,7 +374,7 @@ export class TelegramBot {
         id: jobId,
       };
 
-      this.dBClient.updateCronInCollection(chatId, cronData, 'users');
+      this.dBClient.updateCronInCollection(chatId, cronData, COLLECTION_NAME);
     } catch (error) {
       console.error(error);
       await ctx.reply('Произошла ошибка при установлении интервала.');
@@ -381,7 +382,7 @@ export class TelegramBot {
   }
 
   public async restartCronJob() {
-    const crons = await this.dBClient.getCronData('users');
+    const crons = await this.dBClient.getCronData(COLLECTION_NAME);
     crons.forEach((cron) => {
       this.cronManager.scheduleJob(
         cron.cronData.id,

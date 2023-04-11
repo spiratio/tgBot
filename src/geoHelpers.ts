@@ -18,7 +18,6 @@ export class Geocoder {
     if (results.length === 0) {
       throw new Error(Errors.COORDINATES_NOT_FOUND);
     } else {
-      console.log(results);
       return {
         latitude: results[0].latitude,
         longitude: results[0].longitude,

@@ -1,7 +1,6 @@
 import Redis, { Redis as RedisClient } from 'ioredis';
 import { IUser } from './telegramBot';
 import { Coordinates, CronData, IDbClient, NewCron } from './types';
-import { Collection } from 'mongodb';
 
 export class RedisDbClient implements IDbClient {
   private client: RedisClient;

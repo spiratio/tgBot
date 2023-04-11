@@ -15,8 +15,8 @@ export class MongoDbClient implements IDbClient {
   private db: Db;
   private client: MongoClient;
 
-  constructor(MONGO_URL: string) {
-    this.client = new MongoClient(MONGO_URL);
+  constructor(mongo_url: string) {
+    this.client = new MongoClient(mongo_url);
   }
 
   public async connect(): Promise<void> {
