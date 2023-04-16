@@ -14,3 +14,12 @@ services:
     - REDIS_HOSTS=local:redis:6379
     ports:
     - "8081:8081"
+  redis-backup:
+    container_name: redis-backup
+    image: redis:latest
+    command: sh -c "sleep 60 && redis-cli -h redis-container -p 6379 save && mv /data/dump/dump.rdb /backup/redis-$(date '+%Y%m%d-%H%M%S').rdb && tar cf /backup/redis-$(date '+%Y%m%d-%H%M%S').tar -C /backup redis-$(date '+%Y%m%d-%H%M%S').rdb && rm -rf /backup/redis-$(date '+%Y%m%d-%H%M%S').rdb"
+    volumes:
+    - ./backup:/backup
+    depends_on:
+    - redis
+    restart: always
